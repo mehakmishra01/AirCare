@@ -1,14 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AirCare - Weather & Air Quality</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
     <div class="app-container">
         <!-- Top Bar -->
@@ -17,6 +22,9 @@
                 <span class="logo-icon">☁</span>
                 <span class="logo-text">AirCare</span>
             </div>
+            <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+                <span id="themeIcon">🌙</span>
+            </button>
             <div class="top-bar-center">
                 <div class="location-header">
                     <span class="location-icon">📍</span>
@@ -31,467 +39,518 @@
             </div>
         </header>
 
-        <!-- Main Content Grid -->
-        <main class="main-content">
-        <div class="current-weather-card" id="weatherCard">
-            <video class="weather-bg-video" id="weatherBgVideo" autoplay muted loop playsinline>
-                <source id="weatherVideoSource" src="videos/clouds.mp4.mp4" type="video/mp4">
-            </video>
-            <div class="main-temp">
-                <span id="temperature">--</span>
-                <span class="temp-unit">°</span>
-            </div>
-            <div class="weather-condition" id="weatherDescription">--</div>
-            <div class="temp-range">
-                <span class="temp-high">↑<span id="tempHigh">--</span>°</span>
-                <span class="temp-low">↓<span id="tempLow">--</span>°</span>
-            </div>
-        </div>
-
-        <!-- Quick Stats Grid -->
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-label">Feels Like</div>
-                <div class="stat-value" id="feelsLike">--°</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Humidity</div>
-                <div class="stat-value" id="humidity">--%</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Wind</div>
-                <div class="stat-value" id="windSpeed">-- km/h</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Pressure</div>
-                <div class="stat-value" id="pressure">-- hPa</div>
-            </div>
-        </div>
-
-        <div class="forecast-card forecast-hourly">
-            <div class="card-title">Hourly Forecast</div>
-            <div class="hourly-scroll" id="hourlyForecast">
-                <!-- Hourly items will be added here -->
-            </div>
-        </div>
-
-        <div class="forecast-card forecast-daily">
-            <div class="card-title">7-Day Forecast</div>
-            <div class="daily-list" id="dailyForecast">
-                <!-- Daily items will be added here -->
-            </div>
-        </div>
-
-        <!-- Analytics Cards Section -->
-        <div class="analytics-section">
-            <!-- Running Card -->
-            <div class="analytics-card">
-                <div class="analytics-header">
-                    <div class="analytics-icon-large">🏃</div>
-                    <h3 class="analytics-title">Running</h3>
+        <!-- Tab Bar & Navigation Pills -->
+        <div class="tab-nav-bar">
+            <div class="tab-nav-inner">
+                <div class="tab-switch">
+                    <button class="tab-switch-btn active" data-tab-target="weather" id="tabWeather">
+                        <span class="tab-icon">☀️</span> Weather
+                    </button>
+                    <button class="tab-switch-btn" data-tab-target="aqi" id="tabAQI">
+                        <span class="tab-icon">🌬️</span> AQI
+                    </button>
                 </div>
-                <div class="analytics-status-row">
-                    <div class="status-badge-large" id="runningStatus">--</div>
-                    <p class="status-desc" id="runningDesc">--</p>
-                </div>
-                <div class="analytics-forecast-scroll" id="runningForecast">
-                    <!-- Running hours will be added here -->
-                </div>
-                <div class="carousel-dots-small">
-                    <span class="dot-small active"></span>
-                    <span class="dot-small"></span>
-                    <span class="dot-small"></span>
-                    <span class="dot-small"></span>
-                </div>
-            </div>
-
-            <!-- AQI Card -->
-            <div class="analytics-card">
-                <div class="analytics-header">
-                    <h3 class="analytics-title">AQI</h3>
-                </div>
-                <div class="aqi-display-compact">
-                    <span class="aqi-status-text" id="aqiStatusCompact">--</span>
-                    <span class="aqi-value-compact" id="aqiValueCompact">(--)</span>
-                </div>
-                <div class="progress-bar-container">
-                    <div class="progress-bar-fill" id="aqiProgressBar"></div>
-                </div>
-            </div>
-
-            <!-- Pollen Card -->
-            <div class="analytics-card">
-                <div class="analytics-header">
-                    <h3 class="analytics-title">Pollen</h3>
-                </div>
-                <div class="pollen-list">
-                    <div class="pollen-item">
-                        <span class="pollen-icon">🌿</span>
-                        <span class="pollen-name">Tree</span>
-                        <span class="pollen-level" id="pollenTree">Low</span>
-                    </div>
-                    <div class="pollen-item">
-                        <span class="pollen-icon">🌿</span>
-                        <span class="pollen-name">Grass</span>
-                        <span class="pollen-level" id="pollenGrass">Low</span>
-                    </div>
-                    <div class="pollen-item">
-                        <span class="pollen-icon">🌿</span>
-                        <span class="pollen-name">Ragweed</span>
-                        <span class="pollen-level" id="pollenRagweed">Low</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- UV Index Card -->
-            <div class="analytics-card">
-                <div class="analytics-header">
-                    <span class="analytics-icon">☀️</span>
-                    <h3 class="analytics-title">UV index</h3>
-                </div>
-                <div class="uv-display-compact">
-                    <span class="uv-status-text" id="uvStatusText">--</span>
-                </div>
-                <div class="uv-progress-container">
-                    <div class="uv-progress-bar">
-                        <div class="uv-progress-fill" id="uvProgressFill"></div>
-                        <div class="uv-indicator" id="uvIndicator">0</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Humidity Card -->
-            <div class="analytics-card">
-                <div class="analytics-header">
-                    <span class="analytics-icon">💧</span>
-                    <h3 class="analytics-title">Humidity</h3>
-                </div>
-                <div class="humidity-display-compact">
-                    <span class="humidity-status-text" id="humidityStatusText">--</span>
-                </div>
-                <div class="humidity-value-large" id="humidityValueLarge">--%</div>
-                <div class="humidity-progress-container">
-                    <div class="humidity-progress-bar">
-                        <div class="humidity-progress-fill" id="humidityProgressFill"></div>
-                    </div>
+                <div class="section-pills" id="sectionPills">
+                    <!-- Weather pills (shown by default) -->
+                    <button class="section-pill active" data-scroll-to="weatherCard">Weather</button>
+                    <button class="section-pill" data-scroll-to="hourlyForecast">Hourly</button>
+                    <button class="section-pill" data-scroll-to="dailyForecast">Daily</button>
+                    <button class="section-pill" data-scroll-to="analyticsSection">Analytics</button>
+                    <button class="section-pill" data-scroll-to="sunPathCard">Sun Path</button>
                 </div>
             </div>
         </div>
 
-        <!-- Carousel Section -->
-        <div class="carousel-section">
-            <div class="carousel-container" id="carouselContainer">
-                <div class="carousel-wrapper" id="carouselWrapper">
-                    <!-- Sunrise Card -->
-                    <div class="carousel-card active">
-                        <div class="carousel-icon-large">🌅</div>
-                        <h3 class="carousel-title">Don't miss tomorrow's sunrise</h3>
-                        <p class="carousel-subtitle" id="sunriseText">Sunrise will be at --:--</p>
-                        <div class="sunrise-arc-visual">
-                            <svg viewBox="0 0 200 100" class="arc-svg">
-                                <path d="M 20 80 Q 100 20 180 80" stroke="#FFC107" stroke-width="3" fill="none"/>
-                                <text x="20" y="95" fill="#666" font-size="12" id="sunriseTimeArc">--:--</text>
-                            </svg>
+        <!-- Two-Column Layout: Content + Map -->
+        <div class="content-with-map">
+            <!-- Main Content Grid -->
+            <main class="main-content">
+                <div class="current-weather-card" id="weatherCard" data-tab="weather">
+                    <video class="weather-bg-video" id="weatherBgVideo" autoplay muted loop playsinline>
+                        <source id="weatherVideoSource" src="videos/clouds.mp4.mp4" type="video/mp4">
+                    </video>
+                    <div class="main-temp">
+                        <span id="temperature">--</span>
+                        <span class="temp-unit">°</span>
+                    </div>
+                    <div class="weather-condition" id="weatherDescription">--</div>
+                    <div class="temp-range">
+                        <span class="temp-high">↑<span id="tempHigh">--</span>°</span>
+                        <span class="temp-low">↓<span id="tempLow">--</span>°</span>
+                    </div>
+                </div>
+
+                <!-- Quick Stats Grid -->
+                <div class="stats-grid" data-tab="weather">
+                    <div class="stat-card">
+                        <div class="stat-label">Feels Like</div>
+                        <div class="stat-value" id="feelsLike">--°</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Humidity</div>
+                        <div class="stat-value" id="humidity">--%</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Wind</div>
+                        <div class="stat-value" id="windSpeed">-- km/h</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Pressure</div>
+                        <div class="stat-value" id="pressure">-- hPa</div>
+                    </div>
+                </div>
+
+                <div class="forecast-card forecast-hourly" data-tab="weather">
+                    <div class="card-title">Hourly Forecast</div>
+                    <div class="hourly-scroll" id="hourlyForecast">
+                        <!-- Hourly items will be added here -->
+                    </div>
+                </div>
+
+                <div class="forecast-card forecast-daily" data-tab="weather">
+                    <div class="card-title">7-Day Forecast</div>
+                    <div class="daily-list" id="dailyForecast">
+                        <!-- Daily items will be added here -->
+                    </div>
+                </div>
+
+                <!-- Analytics Cards Section -->
+                <div class="analytics-section" id="analyticsSection" data-tab="weather">
+                    <!-- Running Card -->
+                    <div class="analytics-card">
+                        <div class="analytics-header">
+                            <div class="analytics-icon-large">🏃</div>
+                            <h3 class="analytics-title">Running</h3>
+                        </div>
+                        <div class="analytics-status-row">
+                            <div class="status-badge-large" id="runningStatus">--</div>
+                            <p class="status-desc" id="runningDesc">--</p>
+                        </div>
+                        <div class="analytics-forecast-scroll" id="runningForecast">
+                            <!-- Running hours will be added here -->
+                        </div>
+                        <div class="carousel-dots-small">
+                            <span class="dot-small active"></span>
+                            <span class="dot-small"></span>
+                            <span class="dot-small"></span>
+                            <span class="dot-small"></span>
                         </div>
                     </div>
 
-                    <!-- Outdoor Activities Card -->
-                    <div class="carousel-card">
-                        <div class="carousel-icon-large">🌳</div>
-                        <h3 class="carousel-title">Outdoor Activities</h3>
-                        <div class="activity-status-badge" id="outdoorStatus">--</div>
-                        <p class="activity-desc-text" id="outdoorDesc">--</p>
-                        <div class="activity-tips-list" id="outdoorTips">
-                            <!-- Tips will be added here -->
+                    <!-- AQI Card -->
+                    <div class="analytics-card">
+                        <div class="analytics-header">
+                            <h3 class="analytics-title">AQI</h3>
+                        </div>
+                        <div class="aqi-display-compact">
+                            <span class="aqi-status-text" id="aqiStatusCompact">--</span>
+                            <span class="aqi-value-compact" id="aqiValueCompact">(--)</span>
+                        </div>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar-fill" id="aqiProgressBar"></div>
                         </div>
                     </div>
 
-                    <!-- AQI Tips Card -->
-                    <div class="carousel-card">
-                        <div class="carousel-icon-large">💨</div>
-                        <h3 class="carousel-title">Air Quality Tips</h3>
-                        <p class="carousel-subtitle" id="aqiTipText">--</p>
-                        <div class="aqi-tips-list" id="aqiTipDetails">
-                            <!-- Tips will be added here -->
+                    <!-- Pollen Card -->
+                    <div class="analytics-card">
+                        <div class="analytics-header">
+                            <h3 class="analytics-title">Pollen</h3>
+                        </div>
+                        <div class="pollen-list">
+                            <div class="pollen-item">
+                                <span class="pollen-icon">🌿</span>
+                                <span class="pollen-name">Tree</span>
+                                <span class="pollen-level" id="pollenTree">Low</span>
+                            </div>
+                            <div class="pollen-item">
+                                <span class="pollen-icon">🌿</span>
+                                <span class="pollen-name">Grass</span>
+                                <span class="pollen-level" id="pollenGrass">Low</span>
+                            </div>
+                            <div class="pollen-item">
+                                <span class="pollen-icon">🌿</span>
+                                <span class="pollen-name">Ragweed</span>
+                                <span class="pollen-level" id="pollenRagweed">Low</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- UV Index Card -->
+                    <div class="analytics-card">
+                        <div class="analytics-header">
+                            <span class="analytics-icon">☀️</span>
+                            <h3 class="analytics-title">UV index</h3>
+                        </div>
+                        <div class="uv-display-compact">
+                            <span class="uv-status-text" id="uvStatusText">--</span>
+                        </div>
+                        <div class="uv-progress-container">
+                            <div class="uv-progress-bar">
+                                <div class="uv-progress-fill" id="uvProgressFill"></div>
+                                <div class="uv-indicator" id="uvIndicator">0</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Humidity Card -->
+                    <div class="analytics-card">
+                        <div class="analytics-header">
+                            <span class="analytics-icon">💧</span>
+                            <h3 class="analytics-title">Humidity</h3>
+                        </div>
+                        <div class="humidity-display-compact">
+                            <span class="humidity-status-text" id="humidityStatusText">--</span>
+                        </div>
+                        <div class="humidity-value-large" id="humidityValueLarge">--%</div>
+                        <div class="humidity-progress-container">
+                            <div class="humidity-progress-bar">
+                                <div class="humidity-progress-fill" id="humidityProgressFill"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div class="carousel-dots" id="carouselDots">
-                    <span class="dot active" data-index="0"></span>
-                    <span class="dot" data-index="1"></span>
-                    <span class="dot" data-index="2"></span>
-                </div>
-            </div>
-        </div>
 
-        <!-- Weather Details Grid -->
-        <div class="details-grid">
-            <!-- Wind Card -->
-            <div class="detail-card">
-                <div class="detail-icon">💨</div>
-                <div class="detail-title">Wind</div>
-                <div class="detail-desc" id="windDesc">--</div>
-                <div class="wind-compass-container">
-                    <div class="compass-circle">
-                        <div class="compass-arrow" id="windArrow"></div>
-                        <div class="compass-labels">
-                            <span class="compass-n">N</span>
-                            <span class="compass-e">E</span>
-                            <span class="compass-s">S</span>
-                            <span class="compass-w">W</span>
+                <!-- Carousel Section -->
+                <div class="carousel-section" data-tab="weather">
+                    <div class="carousel-container" id="carouselContainer">
+                        <div class="carousel-wrapper" id="carouselWrapper">
+                            <!-- Sunrise Card -->
+                            <div class="carousel-card active">
+                                <div class="carousel-icon-large">🌅</div>
+                                <h3 class="carousel-title">Don't miss tomorrow's sunrise</h3>
+                                <p class="carousel-subtitle" id="sunriseText">Sunrise will be at --:--</p>
+                                <div class="sunrise-arc-visual">
+                                    <svg viewBox="0 0 200 100" class="arc-svg">
+                                        <path d="M 20 80 Q 100 20 180 80" stroke="#FFC107" stroke-width="3"
+                                            fill="none" />
+                                        <text x="20" y="95" fill="#666" font-size="12" id="sunriseTimeArc">--:--</text>
+                                    </svg>
+                                </div>
+                            </div>
+
+                            <!-- Outdoor Activities Card -->
+                            <div class="carousel-card">
+                                <div class="carousel-icon-large">🌳</div>
+                                <h3 class="carousel-title">Outdoor Activities</h3>
+                                <div class="activity-status-badge" id="outdoorStatus">--</div>
+                                <p class="activity-desc-text" id="outdoorDesc">--</p>
+                                <div class="activity-tips-list" id="outdoorTips">
+                                    <!-- Tips will be added here -->
+                                </div>
+                            </div>
+
+                            <!-- AQI Tips Card -->
+                            <div class="carousel-card">
+                                <div class="carousel-icon-large">💨</div>
+                                <h3 class="carousel-title">Air Quality Tips</h3>
+                                <p class="carousel-subtitle" id="aqiTipText">--</p>
+                                <div class="aqi-tips-list" id="aqiTipDetails">
+                                    <!-- Tips will be added here -->
+                                </div>
+                            </div>
+                        </div>
+                        <div class="carousel-dots" id="carouselDots">
+                            <span class="dot active" data-index="0"></span>
+                            <span class="dot" data-index="1"></span>
+                            <span class="dot" data-index="2"></span>
                         </div>
                     </div>
                 </div>
-                <div class="detail-value" id="windSpeedDetail">-- km/h</div>
-            </div>
 
-            <!-- Dew Point Card -->
-            <div class="detail-card">
-                <div class="detail-icon">💧</div>
-                <div class="detail-title">Dew point</div>
-                <div class="detail-desc" id="dewPointDesc">--</div>
-                <div class="detail-value-large" id="dewPoint">--°</div>
-            </div>
+                <!-- Weather Details Grid -->
+                <div class="details-grid" data-tab="weather">
+                    <!-- Wind Card -->
+                    <div class="detail-card">
+                        <div class="detail-icon">💨</div>
+                        <div class="detail-title">Wind</div>
+                        <div class="detail-desc" id="windDesc">--</div>
+                        <div class="wind-compass-container">
+                            <div class="compass-circle">
+                                <div class="compass-arrow" id="windArrow"></div>
+                                <div class="compass-labels">
+                                    <span class="compass-n">N</span>
+                                    <span class="compass-e">E</span>
+                                    <span class="compass-s">S</span>
+                                    <span class="compass-w">W</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="detail-value" id="windSpeedDetail">-- km/h</div>
+                    </div>
 
-            <!-- Pressure Card -->
-            <div class="detail-card">
-                <div class="detail-icon">📊</div>
-                <div class="detail-title">Pressure</div>
-                <div class="detail-desc" id="pressureDesc">--</div>
-                <div class="pressure-gauge-container">
-                    <div class="pressure-gauge-bar">
-                        <div class="pressure-gauge-fill" id="pressureGauge"></div>
+                    <!-- Dew Point Card -->
+                    <div class="detail-card">
+                        <div class="detail-icon">💧</div>
+                        <div class="detail-title">Dew point</div>
+                        <div class="detail-desc" id="dewPointDesc">--</div>
+                        <div class="detail-value-large" id="dewPoint">--°</div>
+                    </div>
+
+                    <!-- Pressure Card -->
+                    <div class="detail-card">
+                        <div class="detail-icon">📊</div>
+                        <div class="detail-title">Pressure</div>
+                        <div class="detail-desc" id="pressureDesc">--</div>
+                        <div class="pressure-gauge-container">
+                            <div class="pressure-gauge-bar">
+                                <div class="pressure-gauge-fill" id="pressureGauge"></div>
+                            </div>
+                        </div>
+                        <div class="detail-value" id="pressureDetail">-- mb</div>
+                    </div>
+
+                    <!-- Visibility Card -->
+                    <div class="detail-card">
+                        <div class="detail-icon">👁️</div>
+                        <div class="detail-title">Visibility</div>
+                        <div class="detail-desc" id="visibilityDesc">--</div>
+                        <div class="detail-value-large" id="visibility">-- km</div>
                     </div>
                 </div>
-                <div class="detail-value" id="pressureDetail">-- mb</div>
-            </div>
 
-            <!-- Visibility Card -->
-            <div class="detail-card">
-                <div class="detail-icon">👁️</div>
-                <div class="detail-title">Visibility</div>
-                <div class="detail-desc" id="visibilityDesc">--</div>
-                <div class="detail-value-large" id="visibility">-- km</div>
-            </div>
-        </div>
-
-        <!-- Sunrise/Sunset Card -->
-        <div class="sun-path-card">
-            <div class="sun-path-visual">
-                <svg viewBox="0 0 400 120" class="sun-path-svg" id="sunPathSvg">
-                    <defs>
-                        <linearGradient id="skyGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                            <stop offset="0%" style="stop-color:#FFD700;stop-opacity:0.3" />
-                            <stop offset="50%" style="stop-color:#87CEEB;stop-opacity:0.2" />
-                            <stop offset="100%" style="stop-color:#2a5298;stop-opacity:0.3" />
-                        </linearGradient>
-                    </defs>
-                    <rect width="400" height="120" fill="url(#skyGradient)" rx="10"/>
-                    <path id="sunPath" d="M 50 100 Q 200 20 350 100" stroke="#FFC107" stroke-width="4" fill="none" stroke-linecap="round"/>
-                    <circle id="sunPosition" cx="200" cy="50" r="10" fill="#FFC107" opacity="0.9">
-                        <animate attributeName="opacity" values="0.9;1;0.9" dur="2s" repeatCount="indefinite"/>
-                    </circle>
-                    <g id="sunRays" opacity="0.4">
-                        <line x1="200" y1="50" x2="190" y2="40" stroke="#FFC107" stroke-width="2"/>
-                        <line x1="200" y1="50" x2="210" y2="40" stroke="#FFC107" stroke-width="2"/>
-                        <line x1="200" y1="50" x2="200" y2="35" stroke="#FFC107" stroke-width="2"/>
-                        <line x1="200" y1="50" x2="190" y2="60" stroke="#FFC107" stroke-width="2"/>
-                        <line x1="200" y1="50" x2="210" y2="60" stroke="#FFC107" stroke-width="2"/>
-                    </g>
-                </svg>
-            </div>
-            <div class="sun-times-row">
-                <div class="sun-time-block">
-                    <div class="sun-label">Sunrise</div>
-                    <div class="sun-time" id="sunrise">--:--</div>
-                </div>
-                <div class="sun-time-block">
-                    <div class="sun-label">Sunset</div>
-                    <div class="sun-time" id="sunset">--:--</div>
-                </div>
-            </div>
-            <div class="day-length-info">
-                <span class="day-length-label">Day Length</span>
-                <span class="day-length-value" id="dayLength">--h --m</span>
-            </div>
-        </div>
-
-        <!-- AQI Card - Detailed (AQI.in style) -->
-        <div class="aqi-card-main">
-            <div class="aqi-card-header">
-                <h2 class="card-title">Air Quality Index (AQI)</h2>
-                <span class="aqi-last-updated" id="aqiLastUpdated">Last Updated: --</span>
-            </div>
-            
-            <div class="aqi-display-main" id="aqiDisplayMain">
-                <div class="aqi-live-badge">Live AQI</div>
-                <div class="aqi-number" id="aqiValue">--</div>
-                <span class="aqi-scale-label">AQI (US)</span>
-                <div class="aqi-label" id="aqiStatus">--</div>
-                <div class="aqi-note-small" id="aqiNote"></div>
-            </div>
-            
-            <!-- AQI Scale Bar -->
-            <div class="aqi-scale-bar">
-                <div class="aqi-scale-segments">
-                    <span class="scale-seg" data-range="0-50">Good<br>0-50</span>
-                    <span class="scale-seg" data-range="51-100">Moderate<br>51-100</span>
-                    <span class="scale-seg" data-range="101-150">Poor<br>101-150</span>
-                    <span class="scale-seg" data-range="151-200">Unhealthy<br>151-200</span>
-                    <span class="scale-seg" data-range="201-300">Severe<br>201-300</span>
-                    <span class="scale-seg" data-range="301-500">Hazardous<br>301+</span>
-                </div>
-                <div class="aqi-scale-indicator" id="aqiScaleIndicator"></div>
-            </div>
-            
-            <!-- Major Air Pollutants -->
-            <h3 class="aqi-section-title">Major Air Pollutants</h3>
-            <div class="pollutants-grid">
-                <div class="pollutant-item">
-                    <span class="pollutant-icon">PM2.5</span>
-                    <span class="pollutant-label">Particulate Matter (PM2.5)</span>
-                    <span class="pollutant-value" id="pm25">-- µg/m³</span>
-                </div>
-                <div class="pollutant-item">
-                    <span class="pollutant-icon">PM10</span>
-                    <span class="pollutant-label">Particulate Matter (PM10)</span>
-                    <span class="pollutant-value" id="pm10">-- µg/m³</span>
-                </div>
-                <div class="pollutant-item">
-                    <span class="pollutant-icon">CO</span>
-                    <span class="pollutant-label">Carbon Monoxide</span>
-                    <span class="pollutant-value" id="co">-- ppb</span>
-                </div>
-                <div class="pollutant-item">
-                    <span class="pollutant-icon">SO₂</span>
-                    <span class="pollutant-label">Sulfur Dioxide</span>
-                    <span class="pollutant-value" id="so2">-- ppb</span>
-                </div>
-                <div class="pollutant-item">
-                    <span class="pollutant-icon">NO₂</span>
-                    <span class="pollutant-label">Nitrogen Dioxide</span>
-                    <span class="pollutant-value" id="no2">-- µg/m³</span>
-                </div>
-                <div class="pollutant-item">
-                    <span class="pollutant-icon">O₃</span>
-                    <span class="pollutant-label">Ozone</span>
-                    <span class="pollutant-value" id="o3">-- µg/m³</span>
-                </div>
-            </div>
-            
-            <!-- Health Advice: Cigarette Equivalent -->
-            <div class="aqi-health-advice">
-                <h3 class="aqi-section-title">Health Impact</h3>
-                <div class="cigarette-equivalent">
-                    <span class="cig-value" id="cigaretteEquivalent">--</span>
-                    <span class="cig-label">cigarettes per day</span>
-                </div>
-                <div class="cig-breakdown">
-                    <span>Weekly: <strong id="cigWeekly">--</strong></span>
-                    <span>Monthly: <strong id="cigMonthly">--</strong></span>
-                </div>
-                <p class="cig-disclaimer">Breathing the air in this location is as harmful as smoking the equivalent cigarettes. Source: Berkeley Earth.</p>
-            </div>
-            
-            <!-- Solutions for Current AQI -->
-            <div class="aqi-solutions">
-                <h3 class="aqi-section-title">Solutions for Current AQI</h3>
-                <div class="solutions-grid" id="aqiSolutionsGrid">
-                    <!-- Filled by JS -->
-                </div>
-            </div>
-            
-            <!-- Health Risks (AQI.in style with condition pills) -->
-            <div class="aqi-health-risks">
-                <h3 class="aqi-section-title">Prevent Health Problems: Understand Your Risks</h3>
-                <p class="health-risks-city" id="healthRisksCity">--</p>
-                <div class="health-condition-pills" id="healthConditionPills">
-                    <button type="button" class="health-pill active" data-condition="asthma" aria-pressed="true">Asthma</button>
-                    <button type="button" class="health-pill" data-condition="heart">Heart Issues</button>
-                    <button type="button" class="health-pill" data-condition="allergies">Allergies</button>
-                    <button type="button" class="health-pill" data-condition="sinus">Sinus</button>
-                    <button type="button" class="health-pill" data-condition="coldflu">Cold/Flu</button>
-                    <button type="button" class="health-pill" data-condition="copd">Chronic (COPD)</button>
-                </div>
-                <div class="health-risks-panel" id="healthRisksPanel">
-                    <div class="health-illustration-panel">
-                        <div class="health-illustration" id="healthIllustration">
-                            <!-- Icon/illustration area -->
-                        </div>
-                        <div class="health-risk-badge" id="healthRiskBadge">--</div>
+                <!-- Sunrise/Sunset Card -->
+                <div class="sun-path-card" id="sunPathCard" data-tab="weather">
+                    <div class="sun-path-visual">
+                        <svg viewBox="0 0 400 120" class="sun-path-svg" id="sunPathSvg">
+                            <defs>
+                                <linearGradient id="skyGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                                    <stop offset="0%" style="stop-color:#FFD700;stop-opacity:0.3" />
+                                    <stop offset="50%" style="stop-color:#87CEEB;stop-opacity:0.2" />
+                                    <stop offset="100%" style="stop-color:#2a5298;stop-opacity:0.3" />
+                                </linearGradient>
+                            </defs>
+                            <rect width="400" height="120" fill="url(#skyGradient)" rx="10" />
+                            <path id="sunPath" d="M 50 100 Q 200 20 350 100" stroke="#FFC107" stroke-width="4"
+                                fill="none" stroke-linecap="round" />
+                            <circle id="sunPosition" cx="200" cy="50" r="10" fill="#FFC107" opacity="0.9">
+                                <animate attributeName="opacity" values="0.9;1;0.9" dur="2s" repeatCount="indefinite" />
+                            </circle>
+                            <g id="sunRays" opacity="0.4">
+                                <line x1="200" y1="50" x2="190" y2="40" stroke="#FFC107" stroke-width="2" />
+                                <line x1="200" y1="50" x2="210" y2="40" stroke="#FFC107" stroke-width="2" />
+                                <line x1="200" y1="50" x2="200" y2="35" stroke="#FFC107" stroke-width="2" />
+                                <line x1="200" y1="50" x2="190" y2="60" stroke="#FFC107" stroke-width="2" />
+                                <line x1="200" y1="50" x2="210" y2="60" stroke="#FFC107" stroke-width="2" />
+                            </g>
+                        </svg>
                     </div>
-                    <div class="health-details-panel">
-                        <h4 class="health-condition-title" id="healthConditionTitle">Asthma</h4>
-                        <p class="health-risk-statement" id="healthRiskStatement">--</p>
-                        <p class="health-symptoms" id="healthSymptoms">--</p>
-                        <div class="health-dos">
-                            <div class="health-list-label">Do's</div>
-                            <ul id="healthDosList"></ul>
+                    <div class="sun-times-row">
+                        <div class="sun-time-block">
+                            <div class="sun-label">Sunrise</div>
+                            <div class="sun-time" id="sunrise">--:--</div>
                         </div>
-                        <div class="health-donts">
-                            <div class="health-list-label">Don'ts</div>
-                            <ul id="healthDontsList"></ul>
+                        <div class="sun-time-block">
+                            <div class="sun-label">Sunset</div>
+                            <div class="sun-time" id="sunset">--:--</div>
                         </div>
                     </div>
+                    <div class="day-length-info">
+                        <span class="day-length-label">Day Length</span>
+                        <span class="day-length-value" id="dayLength">--h --m</span>
+                    </div>
                 </div>
-            </div>
-            
-            <p class="aqi-disclaimer">Disclaimer: The above health risks are precautionary suggestions based on current AQI levels. AQI.IN is neither a medical expert nor a provider of medical advice. Prolonged exposure to air pollution can contribute to these health conditions over time. Please consult a doctor if you experience any symptoms.</p>
-        </div>
 
-        <!-- Air Quality Calendar -->
-        <div class="aqi-calendar-section" id="aqiCalendarSection">
-            <h2 class="aqi-calendar-title">Air Quality Calendar <span id="aqiCalendarYear">2026</span></h2>
-            <p class="aqi-calendar-city" id="aqiCalendarCity">--</p>
-            <div class="aqi-calendar-nav">
-                <button type="button" class="cal-nav-btn" id="calPrevMonth" aria-label="Previous month">←</button>
-                <span class="cal-month-label" id="calMonthLabel">January 2026</span>
-                <button type="button" class="cal-nav-btn" id="calNextMonth" aria-label="Next month">→</button>
-            </div>
-            <div class="aqi-calendar-grid" id="aqiCalendarGrid">
-                <!-- Filled by JS -->
-            </div>
-            <div class="aqi-calendar-legend">
-                <span class="legend-item" data-range="0-50">Good 0-50</span>
-                <span class="legend-item" data-range="51-100">Moderate 51-100</span>
-                <span class="legend-item" data-range="101-150">Poor 101-150</span>
-                <span class="legend-item" data-range="151-200">Unhealthy 151-200</span>
-                <span class="legend-item" data-range="201-300">Severe 201-300</span>
-                <span class="legend-item" data-range="301-500">Hazardous 301+</span>
-            </div>
-        </div>
+                <!-- AQI Card - Detailed (AQI.in style) -->
+                <div class="aqi-card-main" id="aqiSection" data-tab="aqi">
+                    <div class="aqi-card-header">
+                        <h2 class="card-title">Air Quality Index (AQI)</h2>
+                        <span class="aqi-last-updated" id="aqiLastUpdated">Last Updated: --</span>
+                    </div>
 
-        <!-- City Locations / Monitoring Stations (AQI.in style) -->
-        <div class="locations-section" id="locationsTableSection" style="display: none;">
-            <h2 class="locations-title" id="locationsSectionTitle">Locations</h2>
-            <p class="locations-subtitle">Real-time Air Pollution Level</p>
-            <div class="locations-table-wrapper">
-                <table class="locations-table">
-                    <thead>
-                        <tr>
-                            <th data-sort="location">Location</th>
-                            <th data-sort="status">Status</th>
-                            <th data-sort="aqi">AQI (US)</th>
-                            <th data-sort="pm25">PM2.5 (µg/m³)</th>
-                            <th data-sort="pm10">PM10 (µg/m³)</th>
-                            <th>Temp. (°C)</th>
-                            <th>Humi. (%)</th>
-                        </tr>
-                    </thead>
-                    <tbody id="locationsTableBody">
+                    <div class="aqi-display-main" id="aqiDisplayMain">
+                        <div class="aqi-live-badge">Live AQI</div>
+                        <div class="aqi-number" id="aqiValue">--</div>
+                        <span class="aqi-scale-label">AQI (US)</span>
+                        <div class="aqi-label" id="aqiStatus">--</div>
+                        <div class="aqi-note-small" id="aqiNote"></div>
+                    </div>
+
+                    <!-- AQI Scale Bar -->
+                    <div class="aqi-scale-bar">
+                        <div class="aqi-scale-segments">
+                            <span class="scale-seg" data-range="0-50">Good<br>0-50</span>
+                            <span class="scale-seg" data-range="51-100">Moderate<br>51-100</span>
+                            <span class="scale-seg" data-range="101-150">Poor<br>101-150</span>
+                            <span class="scale-seg" data-range="151-200">Unhealthy<br>151-200</span>
+                            <span class="scale-seg" data-range="201-300">Severe<br>201-300</span>
+                            <span class="scale-seg" data-range="301-500">Hazardous<br>301+</span>
+                        </div>
+                        <div class="aqi-scale-indicator" id="aqiScaleIndicator"></div>
+                    </div>
+
+                    <!-- Major Air Pollutants -->
+                    <h3 class="aqi-section-title">Major Air Pollutants</h3>
+                    <div class="pollutants-grid">
+                        <div class="pollutant-item" id="sectionPM25">
+                            <span class="pollutant-icon">PM2.5</span>
+                            <span class="pollutant-label">Particulate Matter (PM2.5)</span>
+                            <span class="pollutant-value" id="pm25">-- µg/m³</span>
+                        </div>
+                        <div class="pollutant-item" id="sectionPM10">
+                            <span class="pollutant-icon">PM10</span>
+                            <span class="pollutant-label">Particulate Matter (PM10)</span>
+                            <span class="pollutant-value" id="pm10">-- µg/m³</span>
+                        </div>
+                        <div class="pollutant-item" id="sectionCO">
+                            <span class="pollutant-icon">CO</span>
+                            <span class="pollutant-label">Carbon Monoxide</span>
+                            <span class="pollutant-value" id="co">-- ppb</span>
+                        </div>
+                        <div class="pollutant-item" id="sectionSO2">
+                            <span class="pollutant-icon">SO₂</span>
+                            <span class="pollutant-label">Sulfur Dioxide</span>
+                            <span class="pollutant-value" id="so2">-- ppb</span>
+                        </div>
+                        <div class="pollutant-item" id="sectionNO2">
+                            <span class="pollutant-icon">NO₂</span>
+                            <span class="pollutant-label">Nitrogen Dioxide</span>
+                            <span class="pollutant-value" id="no2">-- µg/m³</span>
+                        </div>
+                        <div class="pollutant-item" id="sectionO3">
+                            <span class="pollutant-icon">O₃</span>
+                            <span class="pollutant-label">Ozone</span>
+                            <span class="pollutant-value" id="o3">-- µg/m³</span>
+                        </div>
+                    </div>
+
+                    <!-- Health Advice: Cigarette Equivalent -->
+                    <div class="aqi-health-advice">
+                        <h3 class="aqi-section-title">Health Impact</h3>
+                        <div class="cigarette-equivalent">
+                            <span class="cig-value" id="cigaretteEquivalent">--</span>
+                            <span class="cig-label">cigarettes per day</span>
+                        </div>
+                        <div class="cig-breakdown">
+                            <span>Weekly: <strong id="cigWeekly">--</strong></span>
+                            <span>Monthly: <strong id="cigMonthly">--</strong></span>
+                        </div>
+                        <p class="cig-disclaimer">Breathing the air in this location is as harmful as smoking the
+                            equivalent
+                            cigarettes. Source: Berkeley Earth.</p>
+                    </div>
+
+                    <!-- Solutions for Current AQI -->
+                    <div class="aqi-solutions">
+                        <h3 class="aqi-section-title">Solutions for Current AQI</h3>
+                        <div class="solutions-grid" id="aqiSolutionsGrid">
+                            <!-- Filled by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Health Risks (AQI.in style with condition pills) -->
+                    <div class="aqi-health-risks">
+                        <h3 class="aqi-section-title">Prevent Health Problems: Understand Your Risks</h3>
+                        <p class="health-risks-city" id="healthRisksCity">--</p>
+                        <div class="health-condition-pills" id="healthConditionPills">
+                            <button type="button" class="health-pill active" data-condition="asthma"
+                                aria-pressed="true">Asthma</button>
+                            <button type="button" class="health-pill" data-condition="heart">Heart Issues</button>
+                            <button type="button" class="health-pill" data-condition="allergies">Allergies</button>
+                            <button type="button" class="health-pill" data-condition="sinus">Sinus</button>
+                            <button type="button" class="health-pill" data-condition="coldflu">Cold/Flu</button>
+                            <button type="button" class="health-pill" data-condition="copd">Chronic (COPD)</button>
+                        </div>
+                        <div class="health-risks-panel" id="healthRisksPanel">
+                            <div class="health-illustration-panel">
+                                <div class="health-illustration" id="healthIllustration">
+                                    <!-- Icon/illustration area -->
+                                </div>
+                                <div class="health-risk-badge" id="healthRiskBadge">--</div>
+                            </div>
+                            <div class="health-details-panel">
+                                <h4 class="health-condition-title" id="healthConditionTitle">Asthma</h4>
+                                <p class="health-risk-statement" id="healthRiskStatement">--</p>
+                                <p class="health-symptoms" id="healthSymptoms">--</p>
+                                <div class="health-dos">
+                                    <div class="health-list-label">Do's</div>
+                                    <ul id="healthDosList"></ul>
+                                </div>
+                                <div class="health-donts">
+                                    <div class="health-list-label">Don'ts</div>
+                                    <ul id="healthDontsList"></ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <p class="aqi-disclaimer">Disclaimer: The above health risks are precautionary suggestions based on
+                        current AQI levels. AQI.IN is neither a medical expert nor a provider of medical advice.
+                        Prolonged
+                        exposure to air pollution can contribute to these health conditions over time. Please consult a
+                        doctor if you experience any symptoms.</p>
+                </div>
+
+                <!-- Air Quality Calendar -->
+                <div class="aqi-calendar-section" id="aqiCalendarSection" data-tab="aqi">
+                    <h2 class="aqi-calendar-title">Air Quality Calendar <span id="aqiCalendarYear">2026</span></h2>
+                    <p class="aqi-calendar-city" id="aqiCalendarCity">--</p>
+                    <div class="aqi-calendar-nav">
+                        <button type="button" class="cal-nav-btn" id="calPrevMonth"
+                            aria-label="Previous month">←</button>
+                        <span class="cal-month-label" id="calMonthLabel">January 2026</span>
+                        <button type="button" class="cal-nav-btn" id="calNextMonth" aria-label="Next month">→</button>
+                    </div>
+                    <div class="aqi-calendar-grid" id="aqiCalendarGrid">
                         <!-- Filled by JS -->
-                    </tbody>
-                </table>
-            </div>
-        </div>
+                    </div>
+                    <div class="aqi-calendar-legend">
+                        <span class="legend-item" data-range="0-50">Good 0-50</span>
+                        <span class="legend-item" data-range="51-100">Moderate 51-100</span>
+                        <span class="legend-item" data-range="101-150">Poor 101-150</span>
+                        <span class="legend-item" data-range="151-200">Unhealthy 151-200</span>
+                        <span class="legend-item" data-range="201-300">Severe 201-300</span>
+                        <span class="legend-item" data-range="301-500">Hazardous 301+</span>
+                    </div>
+                </div>
 
-        <!-- Loading and Error -->
-        <div class="loading" id="loading">Loading...</div>
-        <div class="error" id="error"></div>
-        <div class="last-updated" id="lastUpdated"></div>
-        </main>
+                <!-- City Locations / Monitoring Stations (AQI.in style) -->
+                <div class="locations-section" id="locationsTableSection" data-tab="aqi" style="display: none;">
+                    <h2 class="locations-title" id="locationsSectionTitle">Locations</h2>
+                    <p class="locations-subtitle">Real-time Air Pollution Level</p>
+                    <div class="locations-table-wrapper">
+                        <table class="locations-table">
+                            <thead>
+                                <tr>
+                                    <th data-sort="location">Location</th>
+                                    <th data-sort="status">Status</th>
+                                    <th data-sort="aqi">AQI (US)</th>
+                                    <th data-sort="pm25">PM2.5 (µg/m³)</th>
+                                    <th data-sort="pm10">PM10 (µg/m³)</th>
+                                    <th>Temp. (°C)</th>
+                                    <th>Humi. (%)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="locationsTableBody">
+                                <!-- Filled by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Loading and Error -->
+                <div class="loading" id="loading">Loading...</div>
+                <div class="error" id="error"></div>
+                <div class="last-updated" id="lastUpdated"></div>
+            </main>
+
+            <!-- AQI Map Sidebar -->
+            <aside class="aqi-map-sidebar" id="aqiMapSidebar">
+                <div class="map-sidebar-card">
+                    <div class="map-sidebar-header">
+                        <span class="map-header-title">AQI <span class="map-header-highlight">Map</span></span>
+                        <button class="map-expand-btn" id="mapExpandBtn" aria-label="Expand map">⛶</button>
+                    </div>
+                    <div class="map-container" id="aqiMapContainer"></div>
+                    <div class="map-city-label">
+                        <span class="map-pin-icon">📍</span>
+                        <span class="map-city-name" id="mapCityName">Search a city</span>
+                    </div>
+                </div>
+            </aside>
+        </div> <!-- end content-with-map -->
     </div>
 
     <script src="script.js"></script>
 </body>
+
 </html>
