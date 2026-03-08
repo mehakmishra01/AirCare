@@ -2,7 +2,7 @@
 
 /* ===== Design Tokens ===== */
 :root {
-    /* Dark theme - rich deep blue with vibrant accents */
+    /* Dark theme - rich deep blue with vibrant accents. */
     --bg-primary: #0a0e1a;
     --bg-gradient: linear-gradient(145deg, #0a0e1a 0%, #111832 50%, #0d1528 100%);
     --bg-secondary: rgba(15, 20, 40, 0.95);

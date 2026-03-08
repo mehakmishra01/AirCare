@@ -58,7 +58,7 @@ const AQICN_API_URL = 'https://api.waqi.info/feed';
 const AQICN_MAP_BOUNDS_URL = 'https://api.waqi.info/map/bounds/';
 const AQICN_SEARCH_URL = 'https://api.waqi.info/search/';
 
-// Get elements from HTML
+// Get elements from HTML. 
 const cityInput = document.getElementById('cityInput');
 const searchBtn = document.getElementById('searchBtn');
 const loading = document.getElementById('loading');
